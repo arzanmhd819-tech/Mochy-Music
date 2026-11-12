@@ -17,6 +17,10 @@ class YouTubeQueue(
     private var endpoint: WatchEndpoint,
     override val preloadItem: MediaMetadata? = null,
 ) : Queue {
+    // A bare video endpoint is a user selecting one song. Its related/radio results must not
+    // replace the queue that was already playing.
+    override val isSingleTrackSelection: Boolean
+        get() = endpoint.playlistId == null
     private var continuation: String? = null
     private var failedPageLoads = 0
 

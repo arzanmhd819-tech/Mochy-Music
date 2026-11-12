@@ -9,6 +9,10 @@ import com.mochyy.mochymusic.models.MediaMetadata
 interface Queue {
     val preloadItem: MediaMetadata?
 
+    /** True when this queue represents a single song selection, rather than a playlist/radio session. */
+    val isSingleTrackSelection: Boolean
+        get() = false
+
     suspend fun getInitialStatus(): Status
 
     fun hasNextPage(): Boolean

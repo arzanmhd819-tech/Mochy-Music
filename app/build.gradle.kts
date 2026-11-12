@@ -18,6 +18,9 @@ plugins {
     alias(libs.plugins.protobufPlugin)
 }
 
+val forkAppVersionCode = providers.gradleProperty("APP_VERSION_CODE").orNull?.toIntOrNull() ?: 74
+val forkAppVersionName = providers.gradleProperty("APP_VERSION_NAME").orNull ?: "8.3.3"
+
 extensions.configure<ApplicationExtension> {
     namespace = "com.mochyy.mochymusic"
     compileSdk = 36
@@ -27,8 +30,10 @@ extensions.configure<ApplicationExtension> {
         applicationId = "com.mochyy.mochymusic"
         minSdk = 24
         targetSdk = 36
-        versionCode = 73
-        versionName = "8.3.2 build#1226"
+        // Fork releases pass these values from the GitHub Actions release workflow.
+        // Local builds retain safe defaults; never reuse a versionCode for published APKs.
+        versionCode = forkAppVersionCode
+        versionName = forkAppVersionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -401,10 +406,15 @@ dependencies {
 
     implementation(libs.media3)
     implementation(libs.media3.session)
+    implementation(libs.car.app)
+    implementation(libs.car.app.projected)
+    implementation(libs.androidx.media)
     implementation(libs.media3.hls)
     implementation(libs.media3.dash)
     implementation(libs.media3.ui)
     implementation(libs.media3.okhttp)
+    // ffmpeg decodes alac (and flac, opus...) on phones that have no decoder of their own for it
+    implementation(libs.media3.ffmpeg)
     // song share videos: decode the background, mix in the song, encode the mp4
     implementation(libs.media3.transformer)
     implementation(libs.media3.effect)

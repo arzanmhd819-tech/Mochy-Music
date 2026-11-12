@@ -12,6 +12,8 @@ class ListQueue(
     val position: Long = 0L,
 ) : Queue {
     override val preloadItem: MediaMetadata? = null
+    override val isSingleTrackSelection: Boolean
+        get() = items.size == 1
 
     override suspend fun getInitialStatus() = Queue.Status(title, items, startIndex, position)
 

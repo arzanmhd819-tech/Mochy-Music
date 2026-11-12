@@ -53,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.mochyy.mochymusic.R
 import com.mochyy.mochymusic.scrobble.ScrobbleSite
+import com.mochyy.mochymusic.ui.screens.devices.showDeviceIntegration
 import com.mochyy.mochymusic.ui.screens.settings.importsync.YouTubeSyncRoute
 import com.mochyy.mochymusic.ui.screens.settings.integrations.IntegrationsRoute
 import com.mochyy.mochymusic.ui.screens.settings.integrations.discord.DiscordRoute
@@ -92,12 +93,14 @@ private val LocalizedSettingsTitles = mapOf(
     "Larp mode" to R.string.larp_mode,
     "Disable App Updates notice" to R.string.settings_updates_notice,
     "Offline mode" to R.string.settings_offline_mode,
+    "Data saver" to R.string.settings_data_saver,
     "Proxy" to R.string.proxy,
     "Albums from liked songs" to R.string.settings_albums_from_likes,
     "Keep playing even when closed" to R.string.playback_keep_playing,
     "Play alongside other apps" to R.string.playback_mix_other_apps,
     "Save Player's last state" to R.string.playback_save_state,
     "Local song auto metadata" to R.string.settings_local_auto_metadata,
+    "Keep shuffle on" to R.string.settings_persistent_shuffle,
     "Disable auto-playing YouTube video" to R.string.settings_disable_video_autoplay,
     "Translations from YouTube" to R.string.settings_youtube_translations,
     "Sync lyrics to music videos" to R.string.settings_sync_lyrics_video,
@@ -169,13 +172,17 @@ private val SettingsIndex = listOf(
     SettingsEntry("App language", "App behaviour", "general_settings", "language bahasa locale device system indonesia english translate", R.string.app_language),
     SettingsEntry("Disable App Updates notice", "App behaviour", "general_settings", "update popup notification updater"),
     SettingsEntry("Offline mode", "App behaviour", "general_settings", "play downloaded cache offline"),
+    SettingsEntry("Data saver", "App behaviour", "general_settings", "data saver mobile metered cellular bandwidth lower quality canvas video"),
     SettingsEntry("Proxy", "App behaviour", ProxySettingsRoute, "proxy socks http server vpn network region country blocked bot sign in"),
     SettingsEntry("Albums from liked songs", "App behaviour", "general_settings", "albums library liked songs old way apple music"),
     SettingsEntry("Keep playing even when closed", "App behaviour", "general_settings", "background close stop playback"),
     SettingsEntry("Play alongside other apps", "App behaviour", "general_settings", "audio focus mix pause other app video game sound together"),
+    SettingsEntry("Pause when muted", "App behaviour", "general_settings", "pause mute volume silent zero off automatic"),
     SettingsEntry("Save Player's last state", "App behaviour", "general_settings", "persistent queue restore track state"),
     SettingsEntry("Local song auto metadata", "App behaviour", "general_settings", "match tags id3 covers lyrics"),
+    SettingsEntry("Keep shuffle on", "App behaviour", "general_settings", "shuffle persistent spotify random keep new playlist"),
     SettingsEntry("Disable auto-playing YouTube video", "App behaviour", "general_settings", "music video live autoplay cover"),
+    SettingsEntry("Studio version for music videos", "App behaviour", "general_settings", "music video mv omv audio studio album version skit sound effects official"),
     SettingsEntry("Translations from YouTube", "App behaviour", "general_settings", "captions translate lyrics language"),
     SettingsEntry("Sync lyrics to music videos", "App behaviour", "general_settings", "lyrics video timing intro skit"),
     SettingsEntry("Don't skip on failure", "App behaviour", "general_settings", "fail stream error stay skip"),
@@ -190,7 +197,8 @@ private val SettingsIndex = listOf(
 
     // Audio Lab
     SettingsEntry("Audio Lab", "Audio Lab", "audio_lab", "sound effects equalizer fx quality"),
-    SettingsEntry("Crossfade", "Audio Lab", "crossmix_settings", "crossmix automix transition gapless blend"),
+    SettingsEntry("Transition", "Audio Lab", "crossmix_settings", "crossfade crossmix automix transition gapless blend"),
+    SettingsEntry("Blend skips", "Audio Lab", "crossmix_settings", "skip next previous back crossfade seamless preload transition fade blend"),
     SettingsEntry("Equalizer", "Audio Lab", "equalizer", "eq bass treble band parametric graph autoeq headphones correction preset"),
     SettingsEntry("AutoEQ", "Audio Lab", "equalizer", "headphones earbuds correction harman database model"),
     SettingsEntry("Audio Quality", "Audio Lab", "audio_quality", "bitrate stream high low lossless hi-res flac monochrome"),
@@ -227,6 +235,7 @@ private val SettingsIndex = listOf(
     SettingsEntry("Remove all downloads", "Storage", "storage_settings", "delete clear downloads offline space"),
 
     // Experimental
+    SettingsEntry("Device integration", "Import & sync", com.mochyy.mochymusic.ui.screens.devices.DeviceIntegrationRoute, "tv television android tv google tv phone tablet car head unit pair link sync stream downloads big screen remote control devices"),
     SettingsEntry("Import & sync", "Experimental", "experimental_settings", "import spotify apple music deezer tidal tunemymusic csv youtube sync export backup transfer"),
     SettingsEntry("Big disc cover styles", "Experimental", "experimental_settings", "disc vinyl cover"),
     SettingsEntry("Music haptics", "Experimental", "experimental_settings", "vibration haptic"),
@@ -241,7 +250,8 @@ private data class RecommendedSetting(
     val titleRes: Int,
     val breadcrumbRes: Int,
     val iconRes: Int,
-    val onClick: (NavController) -> Unit,
+    // opens a page, the list's own way: over it on a phone, beside it on a wide screen
+    val onClick: (open: (String) -> Unit) -> Unit,
 )
 
 private val RecommendedOptions = listOf(
@@ -249,30 +259,31 @@ private val RecommendedOptions = listOf(
         titleRes = R.string.settings_rec_blur,
         breadcrumbRes = R.string.settings_crumb_customisation,
         iconRes = R.drawable.contrast,
-        onClick = { nav ->
+        onClick = { open ->
             SettingsHighlight.pending = "Blur"
-            nav.navigate("customisation_settings")
+            open("customisation_settings")
         }
     ),
     RecommendedSetting(
         titleRes = R.string.settings_rec_crossfade,
         breadcrumbRes = R.string.settings_crumb_audio_lab,
         iconRes = R.drawable.linear_scale,
-        onClick = { nav ->
-            nav.navigate("crossmix_settings")
+        onClick = { open ->
+            open("crossmix_settings")
         }
     ),
     RecommendedSetting(
         titleRes = R.string.settings_rec_equalizer,
         breadcrumbRes = R.string.settings_crumb_audio_lab,
         iconRes = R.drawable.equalizer,
-        onClick = { nav ->
-            nav.navigate("equalizer")
+        onClick = { open ->
+            open("equalizer")
         }
     )
 )
 
 private val BubbleColor = Color(0xFF1C1C1E)
+private val SelectedBubbleColor = Color(0xFF3A3A3E)
 
 // the header holds the mochy mark with the big "Settings" under it, taller than search's title-only header
 private val SettingsTitleBlockHeight = 88.dp
@@ -280,8 +291,19 @@ private val SettingsMarkSize = 32.dp
 private val IconBgColor = Color(0xFF333338)
 
 @Composable
-fun MochySettingsScreen(navController: NavController) {
+fun MochySettingsScreen(navController: NavController, pane: SettingsPane? = null) {
     val focusManager = LocalFocusManager.current
+    val sheets = com.mochyy.mochymusic.ui.component.LocalZoomOutOverlayState.current
+    val devices = com.mochyy.mochymusic.ui.screens.devices.rememberDevicesLink()
+    // on a wide screen the list stays put and its pages open beside it; device integration is a sheet over either
+    val open: (String) -> Unit = { route ->
+        when {
+            route == com.mochyy.mochymusic.ui.screens.devices.DeviceIntegrationRoute -> sheets.showDeviceIntegration(devices)
+            pane != null -> navController.openSettingsPage(route)
+            else -> navController.navigate(route)
+        }
+    }
+    val selected = pane?.selectedRoute
     val scrollState = rememberScrollState()
     val glassState = remember { GlassState() }
 
@@ -376,7 +398,7 @@ fun MochySettingsScreen(navController: NavController) {
                                     .background(BubbleColor)
                                     .clickable {
                                         SettingsHighlight.pending = entry.highlightKey
-                                        navController.navigate(entry.route)
+                                        open(entry.route)
                                     }
                                     .padding(horizontal = 16.dp, vertical = 14.dp)
                             ) {
@@ -432,7 +454,7 @@ fun MochySettingsScreen(navController: NavController) {
                             .padding(horizontal = 20.dp)
                             .clip(RoundedCornerShape(24.dp))
                             .background(BubbleColor)
-                            .clickable { recommendedItem.onClick(navController) }
+                            .clickable { recommendedItem.onClick(open) }
                             .padding(18.dp)
                     ) {
                         Column {
@@ -510,38 +532,54 @@ fun MochySettingsScreen(navController: NavController) {
                         CategoryBubble(
                             title = stringResource(R.string.settings_audio_lab_category),
                             iconRes = R.drawable.equalizer,
-                            onClick = { navController.navigate("audio_lab") }
+                            selected = selected == "audio_lab",
+                            onClick = { open("audio_lab") }
                         )
 
                         CategoryBubble(
                             title = stringResource(R.string.settings_app_behaviour),
                             iconRes = R.drawable.settings,
-                            onClick = { navController.navigate("general_settings") }
+                            selected = selected == "general_settings",
+                            onClick = { open("general_settings") }
                         )
 
                         CategoryBubble(
                             title = stringResource(R.string.settings_customisation_category),
                             iconRes = R.drawable.palette,
-                            onClick = { navController.navigate("customisation_settings") }
+                            selected = selected == "customisation_settings",
+                            onClick = { open("customisation_settings") }
                         )
 
                         CategoryBubble(
                             title = stringResource(R.string.storage),
                             iconRes = R.drawable.storage,
-                            onClick = { navController.navigate("storage_settings") }
+                            selected = selected == "storage_settings",
+                            onClick = { open("storage_settings") }
                         )
 
                         CategoryBubble(
                             title = stringResource(R.string.integrations),
                             iconRes = R.drawable.integration,
-                            onClick = { navController.navigate(IntegrationsRoute) }
+                            selected = selected == IntegrationsRoute,
+                            onClick = { open(IntegrationsRoute) }
+                        )
+
+                        CategoryBubble(
+                            title = stringResource(R.string.devices_title),
+                            iconRes = R.drawable.cast_connected,
+                            selected = false,
+                            onClick = { open(com.mochyy.mochymusic.ui.screens.devices.DeviceIntegrationRoute) }
                         )
 
                         CategoryBubble(
                             title = stringResource(R.string.settings_modules_category),
                             iconRes = R.drawable.library_add,
-                            onClick = { navController.navigate("modules") }
+                            selected = selected == "modules",
+                            onClick = { open("modules") }
                         )
+
+                        // pages the modules that are on bring to settings, right under modules
+                        com.mochyy.mochymusic.ui.screens.settings.modules.ModuleSettingsPages(open = open, selected = selected)
                     }
                 }
             }
@@ -630,13 +668,15 @@ internal fun CategoryBubble(
     title: String,
     iconRes: Int,
     onClick: () -> Unit,
+    // lit while its page is open beside the list on a wide screen
+    selected: Boolean = false,
 ) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
             .clip(RoundedCornerShape(22.dp))
-            .background(BubbleColor)
+            .background(if (selected) SelectedBubbleColor else BubbleColor)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.CenterStart
