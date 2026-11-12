@@ -2636,12 +2636,15 @@ class MusicService :
 
         // Add to Queue is an explicit user action: duplicates are valid queue entries even
         // when the optional duplicate-prevention setting is enabled for other operations.
-        // New manual additions go immediately after the current song, ahead of every older
-        // manual entry and every automatically generated Autoplay entry.
-        val insertAt = (player.currentMediaItemIndex + 1).coerceIn(0, player.mediaItemCount)
+        // Preserve FIFO order: append after existing manual songs and before Autoplay.
+        val insertAt = if (player.shuffleModeEnabled) {
+            player.mediaItemCount
+        } else {
+            upcomingAutoplayStart()
+        }
         player.addMediaItems(insertAt, items.map { it.withAutoplay(false) })
         if (player.shuffleModeEnabled) {
-            placeAddedInShuffleOrder(insertAt until insertAt + items.size, shuffleThem = false, atFront = true)
+            placeAddedInShuffleOrder(insertAt until insertAt + items.size, shuffleThem = false)
         }
         player.prepare()
     }
