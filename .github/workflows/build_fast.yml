@@ -5,6 +5,9 @@ on:
   push:
     branches: [ "feature/spotify-style-queue" ]
 
+permissions:
+  contents: write
+
 jobs:
   build_fast:
     name: Build Universal GMS Profileable (release speed)
@@ -57,3 +60,19 @@ jobs:
           path: app/build/outputs/apk/universalGms/profileable/*.apk
           # release-speed test build, kept for a week
           retention-days: 7
+
+      - name: Publish APK to Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SRC=$(ls app/build/outputs/apk/universalGms/profileable/*.apk | head -n 1)
+          APK="Mochy-Reloaded.apk"
+          cp "$SRC" "$APK"
+          SHA=$(git rev-parse HEAD)
+          # one rolling release: the old one is replaced by the newest build
+          gh release delete mochy-reloaded-latest --cleanup-tag --yes || true
+          gh release create mochy-reloaded-latest "$APK" \
+            --target "$SHA" \
+            --prerelease \
+            --title "Mochy Reloaded" \
+            --notes "Mochy Reloaded, Spotify-style queue build (commit ${SHA:0:7}). Replaced by each new build."
